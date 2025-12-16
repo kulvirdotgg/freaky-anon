@@ -1,0 +1,50 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"display": "Next",
+	"compilerOptions": {
+		"allowJs": true,
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"incremental": true,
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"moduleDetection": "force",
+		"noEmit": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noPropertyAccessFromIndexSignature": false,
+		"noUncheckedIndexedAccess": true,
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"plugins": [
+			{
+				"name": "next"
+			}
+		],
+		"pretty": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"strictNullChecks": true,
+		"target": "es2022",
+		"verbatimModuleSyntax": true
+	},
+	"include": [
+		"next-env.d.ts",
+		"next.config.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		".next/types/**/*.ts",
+		".next/dev/types/**/*.ts"
+	],
+	"exclude": ["node_modules"]
+}
