@@ -40,7 +40,7 @@ export default function Page() {
 			const res = await client.room.post({ ttl: 180 })
 
 			const roomId = res.data?.roomId
-			if (res.status === 200) {
+			if (res.status === 201) {
 				router.push(`/room/${roomId}`)
 			}
 		},

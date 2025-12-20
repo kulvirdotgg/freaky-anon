@@ -1,5 +1,6 @@
 import { Elysia } from "elysia"
-import { roomRouter } from "./room"
+
+import { roomRouter } from "@/server/routes/room"
 
 const app = new Elysia({ prefix: "/api" })
 	.get("/health", () => {
