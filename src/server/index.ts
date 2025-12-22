@@ -10,7 +10,20 @@ const app = new Elysia({ prefix: "/api" })
 
 		switch (code) {
 			case "VALIDATION": {
-				return error.detail(error.message)
+				return error.valueError
+				// const errorDetails = error.valueError
+				//
+				// return {
+				// 	status: error.status,
+				// 	details: {
+				// 		code: error.code,
+				// 		path: error.type,
+				// 		location: errorDetails?.path.slice(1),
+				// 		message: errorDetails?.message,
+				// 		rejected_value: errorDetails?.value,
+				// 		expected_schema: error.expected,
+				// 	},
+				// }
 			}
 			case "NOT_FOUND": {
 				return {
