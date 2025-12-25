@@ -1,5 +1,6 @@
-import { Elysia, t } from "elysia"
+import { Elysia } from "elysia"
 import { nanoid } from "nanoid"
+import { z } from "zod"
 
 import { redis } from "@/server/utils/redis"
 
@@ -23,24 +24,23 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 			})
 		},
 		{
-			body: t.Object({
-				ttl: t.Number({ minimum: 120, maximum: 600 }),
+			body: z.object({
+				ttl: z.number().min(120).max(600),
 			}),
 		},
 	)
 	.get(
-		"/:id",
-		async ({ params }) => {
-			const { id } = params
-			const redisRoomKey = `room:${id}`
+		"/:roomId",
+		async ({ params: { roomId } }) => {
+			const redisRoomKey = `room:${roomId}`
 
 			const room = await redis.hgetall(redisRoomKey)
 
 			return { room }
 		},
 		{
-			params: t.Object({
-				id: t.String(),
+			params: z.object({
+				roomId: z.string(),
 			}),
 		},
 	)

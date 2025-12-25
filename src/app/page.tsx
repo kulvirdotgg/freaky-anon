@@ -47,19 +47,19 @@ export default function Page() {
 	})
 
 	return (
-		<main className="min-h-screen flex flex-col items-center justify-center p-4">
-			<Card className="p-6 w-full max-w-md backdrop-blur-xl">
+		<main className="flex min-h-screen flex-col items-center justify-center p-4">
+			<Card className="w-full max-w-md p-6 backdrop-blur-xl">
 				<CardHeader>
-					<CardTitle className="text-primary text-base">{">"}Anonymous and ephemeral chat rooms</CardTitle>
+					<CardTitle className="text-base text-primary">{">"}Anonymous and ephemeral chat rooms</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center gap-3">
-						<Label className="flex-1 border-2 px-3 py-1 text-sm text-foreground/80">{name}</Label>
+						<Label className="flex-1 border-2 px-3 py-1 text-foreground/80 text-sm">{name}</Label>
 						<Dice4 className="size-8" onClick={() => setName(generateRandomName())} type="button" />
 					</div>
 				</CardContent>
 				<CardFooter className="w-full">
-					<Button className="w-full text-sm font-semibold" onClick={() => joinRoom()} type="button">
+					<Button className="w-full font-semibold text-sm" onClick={() => joinRoom()} type="button">
 						join anon chat room
 					</Button>
 				</CardFooter>
