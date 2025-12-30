@@ -6,4 +6,4 @@ export const envSchema = z.object({
 	UPSTASH_REDIS_REST_TOKEN: z.string(),
 })
 
-export const env = z.parse(envSchema, process.env)
+export const env = envSchema.parse(process.env)
