@@ -27,7 +27,10 @@ export const errorHandler = new Elysia({ name: "error-handler" })
 				})
 			}
 			default: {
-				const statusCode = "status" in error ? (error.status as number) : 500
+				const statusCode =
+					"status" in error
+						? (typeof error.status === "number" ? error.status : Number(error.status)) || 500
+						: 500
 
 				let errMsg = "An error occurred"
 				if (error instanceof Error && error.message) {
