@@ -1,15 +1,12 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.3.9/schema.json",
-	"assist": {
-		"actions": {
-			"source": {
-				"organizeImports": "on",
-				"useSortedAttributes": "on" // sort JSX attributes in order
-			}
-		}
+	"vcs": {
+		"enabled": true,
+		"useIgnoreFile": true,
+		"clientKind": "git"
 	},
 	"files": {
-		"includes": ["**", "!!.next", "!!src/components/ui/*.tsx"]
+		"includes": ["**", "!!.next", "!!src/components/ui/*.tsx"] // skip validation on shadcn components
 	},
 	"formatter": {
 		"indentStyle": "tab",
@@ -20,6 +17,17 @@
 		"domains": {
 			"next": "all",
 			"react": "all"
+		},
+		"rules": {
+			"nursery": {
+				"useSortedClasses": {
+					"level": "warn",
+					"fix": "safe",
+					"options": {
+						"functions": ["clsx", "cva", "cn"]
+					}
+				}
+			}
 		}
 	},
 	"javascript": {
@@ -30,7 +38,16 @@
 	},
 	"css": {
 		"parser": {
+			"cssModules": true,
 			"tailwindDirectives": true
+		}
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": "on",
+				"useSortedAttributes": "on" // sort JSX attributes in order
+			}
 		}
 	}
 }
