@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { Dice4 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +18,12 @@ export default function Page() {
 
 	const router = useRouter()
 
+	const generateAndSetRandomName = useCallback(() => {
+		const randomName = generateRandomName()
+		localStorage.setItem(NAME_KEY, randomName)
+		setName(randomName)
+	}, [])
+
 	useEffect(() => {
 		function main() {
 			const storedName = localStorage.getItem(NAME_KEY)
@@ -27,12 +33,10 @@ export default function Page() {
 				return
 			}
 
-			const randomName = generateRandomName()
-			localStorage.setItem(NAME_KEY, randomName)
-			setName(randomName)
+			generateAndSetRandomName()
 		}
 		main()
-	}, [])
+	}, [generateAndSetRandomName])
 
 	const { mutate: joinRoom } = useMutation({
 		mutationKey: ["join-chat-room"],
@@ -55,7 +59,7 @@ export default function Page() {
 				<CardContent>
 					<div className="flex items-center gap-3">
 						<Label className="flex-1 border-2 px-3 py-1 text-foreground/80 text-sm">{name}</Label>
-						<Dice4 className="size-8" onClick={() => setName(generateRandomName())} type="button" />
+						<Dice4 className="size-8" onClick={generateAndSetRandomName} type="button" />
 					</div>
 				</CardContent>
 				<CardFooter className="w-full">
