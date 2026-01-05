@@ -13,6 +13,6 @@ export const correlator = new Elysia({ name: "correlator" })
 		set.headers[CORRELTION_HEADER] = id
 		storage.enterWith(id)
 	})
-	.as("scoped")
+	.as("global")
 
 export const getCorrelationId = () => storage.getStore()

@@ -47,4 +47,4 @@ export const requestLogger = new Elysia({ name: "request-logger" })
 			"request failed",
 		)
 	})
-	.as("scoped")
+	.as("global")

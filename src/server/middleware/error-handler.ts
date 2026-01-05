@@ -44,4 +44,4 @@ export const errorHandler = new Elysia({ name: "error-handler" })
 			}
 		}
 	})
-	.as("scoped")
+	.as("global")
