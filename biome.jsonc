@@ -47,7 +47,8 @@
 			"source": {
 				"organizeImports": "on",
 				"useSortedAttributes": "on" // sort JSX attributes in order
-			}
+			},
+			"recommended": false
 		}
 	}
 }
