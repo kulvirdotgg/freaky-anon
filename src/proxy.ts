@@ -2,7 +2,7 @@ import { nanoid } from "nanoid"
 import { type NextRequest, NextResponse } from "next/server"
 
 import { env } from "@/server/utils/env"
-import { redis } from "@/server/utils/redis"
+import { genRedisKey, redis } from "@/server/utils/redis"
 
 export const proxy = async (req: NextRequest) => {
 	const pathname = req.nextUrl.pathname
@@ -13,8 +13,8 @@ export const proxy = async (req: NextRequest) => {
 	}
 
 	// roomId user is tyring to connect to
-	const roomId = roomMatch[1]
-	const redisRoomKey = `room:${roomId}`
+	const roomId = roomMatch[1] as string
+	const redisRoomKey = genRedisKey("room", roomId)
 
 	const room = await redis.hgetall<{ connected: string[]; createdAt: number }>(redisRoomKey)
 	if (!room) {
