@@ -3,12 +3,12 @@ import { Redis } from "@upstash/redis"
 export const redis = Redis.fromEnv()
 
 const RedisKeys = {
-	room: (roomId: string) => `room:${roomId}`,
+	room: "room",
+	message: "message",
 } as const
 
 type KeyType = keyof typeof RedisKeys
 
-export function genRedisKey(type: KeyType, roomId: string): string {
-	const keyFunc = RedisKeys[type]
-	return keyFunc(roomId)
+export function redisKey(key: KeyType, id: string): string {
+	return `${key}:${id}`
 }

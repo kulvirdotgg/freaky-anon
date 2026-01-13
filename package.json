@@ -18,7 +18,7 @@
 		"@upstash/redis": "^1.35.8",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"elysia": "^1.4.19",
+		"elysia": "^1.4.22",
 		"lucide-react": "^0.561.0",
 		"nanoid": "^5.1.6",
 		"next": "16.1.0",

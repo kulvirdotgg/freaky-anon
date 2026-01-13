@@ -1,21 +1,19 @@
 import { nanoid } from "nanoid"
 import { type NextRequest, NextResponse } from "next/server"
 
-import { genRedisKey, redis } from "@/lib/redis"
+import { redis, redisKey } from "@/lib/redis"
 
 export const proxy = async (req: NextRequest) => {
 	const pathname = req.nextUrl.pathname
-	console.log("pathname is", pathname)
 
 	const roomMatch = pathname.match(/^\/room\/([^/]+)$/)
-	console.log(roomMatch)
 	if (!roomMatch) {
 		return NextResponse.redirect(new URL("/", req.url))
 	}
 
 	// roomId user is tyring to connect to
 	const roomId = roomMatch[1] as string
-	const redisRoomKey = genRedisKey("room", roomId)
+	const redisRoomKey = redisKey("room", roomId)
 
 	const room = await redis.hgetall<{ connected: string[]; createdAt: number }>(redisRoomKey)
 	if (!room) {

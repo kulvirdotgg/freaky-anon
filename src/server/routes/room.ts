@@ -2,7 +2,8 @@ import { Elysia } from "elysia"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 
-import { genRedisKey, redis } from "@/lib/redis"
+import { type Message, realtime } from "@/lib/realtime"
+import { redis, redisKey } from "@/lib/redis"
 import { roomAuth } from "@/server/middleware/auth"
 
 export const roomRouter = new Elysia({ prefix: "/room" })
@@ -12,7 +13,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		async ({ body, status }) => {
 			const roomId = nanoid()
 
-			const roomKey = genRedisKey("room", roomId)
+			const roomKey = redisKey("room", roomId)
 			await redis.hset(roomKey, {
 				connected: [],
 				createdAt: Date.now(),
@@ -54,7 +55,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		},
 		{
 			body: z.object({
-				message: z.string().min(1).max(1000),
+				text: z.string().min(1).max(1000),
 				sender: z.string().min(1).max(50),
 			}),
 			"room-auth": true,
