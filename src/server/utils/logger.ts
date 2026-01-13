@@ -1,7 +1,5 @@
 import pino from "pino"
 
-import { getCorrelationId } from "@/server/middleware/correlation-id"
-
 import { env } from "@/server/utils/env"
 
 interface LoggerOptions {
@@ -28,11 +26,6 @@ class Logger {
 					}
 				: undefined,
 			base: undefined,
-			// log **correlation-id** with every statement
-			mixin() {
-				const correlationId = getCorrelationId()
-				return correlationId ? { correlationId } : {}
-			},
 		})
 	}
 

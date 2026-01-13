@@ -1,12 +1,10 @@
 import { Elysia } from "elysia"
 
-import { correlator } from "@/server/middleware/correlation-id"
 import { errorHandler } from "@/server/middleware/error-handler"
 import { requestLogger } from "@/server/middleware/request-logger"
 import { roomRouter } from "@/server/routes/room"
 
 const app = new Elysia({ prefix: "/api" })
-	.use(correlator)
 	.use(requestLogger)
 	.use(errorHandler)
 	.get("/health", async ({ status }) => {
