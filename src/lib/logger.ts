@@ -1,7 +1,5 @@
 import pino from "pino"
 
-import { env } from "@/server/utils/env"
-
 interface LoggerOptions {
 	level?: string
 }
@@ -12,7 +10,7 @@ class Logger {
 	constructor(options: LoggerOptions = {}) {
 		const { level = "info" } = options
 
-		const isProd = env.NODE_ENV === "production"
+		const isProd = process.env.NODE_ENV === "production"
 
 		this.logger = pino({
 			level,

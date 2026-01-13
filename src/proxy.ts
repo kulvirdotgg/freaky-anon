@@ -1,13 +1,14 @@
 import { nanoid } from "nanoid"
 import { type NextRequest, NextResponse } from "next/server"
 
-import { env } from "@/server/utils/env"
-import { genRedisKey, redis } from "@/server/utils/redis"
+import { genRedisKey, redis } from "@/lib/redis"
 
 export const proxy = async (req: NextRequest) => {
 	const pathname = req.nextUrl.pathname
+	console.log("pathname is", pathname)
 
 	const roomMatch = pathname.match(/^\/room\/([^/]+)$/)
+	console.log(roomMatch)
 	if (!roomMatch) {
 		return NextResponse.redirect(new URL("/", req.url))
 	}
@@ -37,7 +38,7 @@ export const proxy = async (req: NextRequest) => {
 	const authToken = nanoid()
 	response.cookies.set("x-auth-token", authToken, {
 		path: "/",
-		secure: env.NODE_ENV === "production",
+		secure: process.env.NODE_ENV === "production",
 		sameSite: "strict",
 		httpOnly: true,
 	})

@@ -1,13 +1,7 @@
 import { Elysia } from "elysia"
 
-import { env } from "@/server/utils/env"
-
 export const errorHandler = new Elysia({ name: "error-handler" })
 	.onError(({ code, error, status }) => {
-		if (env.NODE_ENV !== "production") {
-			console.error(error)
-		}
-
 		switch (code) {
 			case "VALIDATION": {
 				return status(422, {

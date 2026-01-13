@@ -2,8 +2,8 @@ import { Elysia } from "elysia"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 
+import { genRedisKey, redis } from "@/lib/redis"
 import { roomAuth } from "@/server/middleware/auth"
-import { genRedisKey, redis } from "@/server/utils/redis"
 
 export const roomRouter = new Elysia({ prefix: "/room" })
 	.use(roomAuth)

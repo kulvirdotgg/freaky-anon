@@ -1,7 +1,7 @@
 import { Elysia } from "elysia"
 import { z } from "zod"
 
-import { genRedisKey, redis } from "@/server/utils/redis"
+import { genRedisKey, redis } from "@/lib/redis"
 
 export const roomAuth = new Elysia({ name: "room-auth" }).macro("room-auth", {
 	params: z.object({
