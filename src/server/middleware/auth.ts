@@ -15,6 +15,14 @@ export const roomAuth = new Elysia({ name: "room-auth" }).macro("room-auth", {
 
 		const roomKey = redisKey("room", roomId)
 		const [connected, ttl] = await redis.pipeline().hget<string[]>(roomKey, "connected").ttl(roomKey).exec()
+
+		if (ttl === -2 || ttl === -1) {
+			return status(410, {
+				status: 410,
+				message: "Room expired",
+			})
+		}
+
 		if (!connected?.includes(authToken)) {
 			return status(401, {
 				status: 401,

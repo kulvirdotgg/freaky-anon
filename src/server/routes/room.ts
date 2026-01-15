@@ -14,14 +14,14 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 			const roomId = nanoid()
 
 			const roomKey = redisKey("room", roomId)
-			const pipeline = redis
+			await redis
 				.pipeline()
 				.hset(roomKey, {
 					connected: [],
 					createdAt: Date.now(),
 				})
 				.expire(roomKey, body.ttl)
-			await pipeline.exec()
+				.exec()
 
 			return status(201, {
 				roomId,
@@ -45,12 +45,11 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 			}
 
 			const messageKey = redisKey("message", room.id)
-			const pipeline = redis
+			await redis
 				.pipeline()
 				.rpush(messageKey, { ...message, authToken })
 				.expire(messageKey, room.ttl)
-
-			await pipeline.exec()
+				.exec()
 
 			await realtime.channel(room.id).emit("room.message", message)
 
