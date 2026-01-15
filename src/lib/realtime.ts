@@ -17,8 +17,8 @@ export type Message = z.infer<typeof messageSchema>
 const schema = {
 	room: {
 		message: messageSchema,
-		destory: z.object({
-			isDestoyed: z.literal(true),
+		destroy: z.object({
+			isDestroyed: z.literal(true),
 		}),
 	},
 }
