@@ -15,8 +15,7 @@
 	},
 	"linter": {
 		"domains": {
-			"next": "all",
-			"react": "all"
+			"next": "all"
 		},
 		"rules": {
 			"nursery": {
@@ -47,7 +46,8 @@
 			"source": {
 				"organizeImports": "on",
 				"useSortedAttributes": "on" // sort JSX attributes in order
-			}
+			},
+			"recommended": false
 		}
 	}
 }

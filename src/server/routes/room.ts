@@ -2,22 +2,26 @@ import { Elysia } from "elysia"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 
-import { redis } from "@/server/utils/redis"
+import { type Message, realtime } from "@/lib/realtime"
+import { redis, redisKey } from "@/lib/redis"
+import { roomAuth } from "@/server/middleware/auth"
 
 export const roomRouter = new Elysia({ prefix: "/room" })
+	.use(roomAuth)
 	.post(
 		"/",
 		async ({ body, status }) => {
 			const roomId = nanoid()
 
-			const redisRoomKey = `room:${roomId}`
-			await redis.hset(redisRoomKey, {
-				connected: [],
-				createdAt: Date.now(),
-			})
-			// If user does not provider `ttl` value
-			// use default value of 10 mins
-			await redis.expire(redisRoomKey, body.ttl)
+			const roomKey = redisKey("room", roomId)
+			await redis
+				.pipeline()
+				.hset(roomKey, {
+					connected: [],
+					createdAt: Date.now(),
+				})
+				.expire(roomKey, body.ttl)
+				.exec()
 
 			return status(201, {
 				roomId,
@@ -25,22 +29,38 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		},
 		{
 			body: z.object({
-				ttl: z.number().min(120).max(600),
+				ttl: z.number().min(120).max(600).default(600),
 			}),
 		},
 	)
-	.get(
-		"/:roomId",
-		async ({ params: { roomId } }) => {
-			const redisRoomKey = `room:${roomId}`
+	.post(
+		"/:roomId/message",
+		async ({ authToken, body, room }) => {
+			const message: Message = {
+				id: nanoid(),
+				sender: body.sender,
+				content: body.content,
+				timestamp: Date.now(),
+				roomId: room.id,
+			}
 
-			const room = await redis.hgetall(redisRoomKey)
+			const messageKey = redisKey("message", room.id)
+			await redis
+				.pipeline()
+				.rpush(messageKey, { ...message, authToken })
+				.expire(messageKey, room.ttl)
+				.exec()
 
-			return { room }
+			await realtime.channel(room.id).emit("room.message", message)
+
+			// expire redis stream used by realtime package
+			await redis.expire(room.id, room.ttl)
 		},
 		{
-			params: z.object({
-				roomId: z.string(),
+			body: z.object({
+				content: z.string().min(1).max(1000),
+				sender: z.string().min(1).max(50),
 			}),
+			"room-auth": true,
 		},
 	)
