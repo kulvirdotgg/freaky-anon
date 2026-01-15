@@ -27,7 +27,12 @@ export const proxy = async (req: NextRequest) => {
         if not connected then
             return 'error:invalid-room'
         end
-        connected = cjson.decode(connected) or {}
+        local ok, decoded = pcall(cjson.decode, connected)
+        if not ok or type(decoded) ~= 'table' then
+            connected = {}
+        else
+            connected = decoded
+        end
 
         local authToken = ARGV[1]
         for _, token in ipairs(connected) do
