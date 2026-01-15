@@ -10,5 +10,5 @@ const RedisKeys = {
 type KeyType = keyof typeof RedisKeys
 
 export function redisKey(key: KeyType, id: string): string {
-	return `${key}:${id}`
+	return `${RedisKeys[key]}:${id}`
 }
