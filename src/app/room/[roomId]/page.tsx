@@ -11,24 +11,29 @@ import { client } from "@/lib/api-client"
 
 export default function Page() {
 	const params = useParams()
-	const [text, setText] = useState("")
+
+	const [message, setMessage] = useState("")
 	const inputRef = useRef<HTMLInputElement>(null)
 
 	const { name } = useUsername()
 
-	const { mutate: sendMessage } = useMutation({
+	const { isPending, mutate: sendMessage } = useMutation({
 		mutationKey: ["send-message"],
-		mutationFn: async ({ text }: { text: string }) => {
+		mutationFn: async ({ content }: { content: string }) => {
 			await client.room({ roomId: params.roomId as string }).message.post({
 				sender: name,
-				text: text,
+				content,
 			})
 		},
 	})
 
 	return (
 		<>
-			<div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-4"></div>
+			<div className="flex-1 space-y-4 overflow-y-auto p-4">
+				<div className="flex h-full items-center justify-center text-muted-foreground">
+					No messages!! Start the conversation
+				</div>
+			</div>
 
 			<div className="border-t bg-background/30 p-4">
 				<div className="flex gap-4">
@@ -37,23 +42,26 @@ export default function Page() {
 						<Input
 							autoFocus
 							className="w-full py-3 pl-8 text-sm"
-							onChange={(e) => setText(e.target.value)}
+							onChange={(e) => setMessage(e.target.value)}
 							onKeyDown={(e) => {
-								if (e.key === "Enter" && text.trim()) {
-									sendMessage({ text })
+								if (e.key === "Enter" && message.trim()) {
+									sendMessage({ content: message })
+									setMessage("")
 									inputRef.current?.focus()
 								}
 							}}
 							placeholder="Type message..."
 							ref={inputRef}
 							type="text"
-							value={text}
+							value={message}
 						/>
 					</div>
 					<Button
 						className="font-bold uppercase disabled:cursor-not-allowed"
+						disabled={isPending || !message.trim()}
 						onClick={() => {
-							sendMessage({ text })
+							sendMessage({ content: message })
+							setMessage("")
 							inputRef.current?.focus()
 						}}
 						variant="secondary"

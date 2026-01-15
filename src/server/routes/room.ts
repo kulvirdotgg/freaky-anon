@@ -39,7 +39,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 			const message: Message = {
 				id: nanoid(),
 				sender: body.sender,
-				text: body.text,
+				content: body.content,
 				timestamp: Date.now(),
 				roomId: room.id,
 			}
@@ -59,7 +59,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		},
 		{
 			body: z.object({
-				text: z.string().min(1).max(1000),
+				content: z.string().min(1).max(1000),
 				sender: z.string().min(1).max(50),
 			}),
 			"room-auth": true,

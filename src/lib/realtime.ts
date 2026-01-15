@@ -6,7 +6,7 @@ import { redis } from "@/lib/redis"
 export const messageSchema = z.object({
 	id: z.nanoid(),
 	sender: z.string(),
-	text: z.string(),
+	content: z.string(),
 	timestamp: z.number(),
 	roomId: z.nanoid(),
 	authToken: z.nanoid().optional(),
