@@ -15,7 +15,14 @@ export const proxy = async (req: NextRequest) => {
 
 	const connected = await redis.hget<string[]>(roomKey, "connected")
 	const authToken = req.cookies.get("x-auth-token")?.value as string
-	if (!connected?.includes(authToken)) {
+
+	// if room does not exist.. lmaooo
+	if (!connected) {
+		return NextResponse.redirect(new URL("/?error=invalid-room-id", req.url))
+	}
+
+	// if user does not belongs to the room
+	if (!connected.includes(authToken)) {
 		return NextResponse.redirect(new URL("/?error=unauthorized", req.url))
 	}
 

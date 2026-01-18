@@ -12,11 +12,12 @@ import { client } from "@/lib/api-client"
 export default function Page() {
 	const searchParams = useSearchParams()
 	const roomId = searchParams.get("room-id") ?? undefined
+	const error = searchParams.get("error") ?? undefined
 
 	const { name } = useUsername()
 
 	const router = useRouter()
-	const { mutate: joinRoom } = useMutation({
+	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
 			const res = await client.room.post({ roomId })
@@ -25,23 +26,34 @@ export default function Page() {
 				const roomId = res.data?.roomId
 				router.push(`/room/${roomId}`)
 			}
-
-			console.log(res.error?.value)
 		},
 	})
 
 	return (
-		<main className="flex min-h-screen items-center justify-center">
-			<Card className="w-full max-w-md p-6 backdrop-blur-xl">
+		<main className="flex min-h-screen flex-col items-center justify-center gap-8">
+			{error && (
+				<Card className="w-full max-w-sm bg-red-900/50 py-6 backdrop-blur-xl lg:max-w-md">
+					<CardContent className="text-center text-sm uppercase">{error.split("-").join(" ")}</CardContent>
+				</Card>
+			)}
+
+			<Card className="w-full max-w-sm p-6 backdrop-blur-xl lg:max-w-md">
 				<CardHeader>
-					<CardTitle className="text-base text-primary">{"> "}Anonymous and ephemeral chat rooms</CardTitle>
+					<CardTitle className="text-base text-primary uppercase">
+						{"> "}Anonymous ephemeral chat room
+					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					<LabelRow label="user" value={name} />
 					{roomId && <LabelRow label="room-id" value={roomId} />}
 				</CardContent>
 				<CardFooter className="w-full">
-					<Button className="w-full font-semibold text-sm" onClick={() => joinRoom({ roomId })} type="submit">
+					<Button
+						className="w-full font-semibold text-sm"
+						disabled={isPending}
+						onClick={() => joinRoom({ roomId })}
+						type="submit"
+					>
 						{roomId ? "join room" : "create room"}
 					</Button>
 				</CardFooter>
