@@ -13,14 +13,17 @@ export default function RoomLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
-	const { roomId } = useParams()
+	const params = useParams()
+	const roomId = params.roomId as string
 
 	const [isCopied, setIsCopied] = useState(false)
 	const [secondsLeft, setSecondsLeft] = useState(100)
 
 	const copyLink = () => {
-		const url = window.location.href
-		window.navigator.clipboard.writeText(url)
+		const url = new URL(window.location.origin)
+		url.searchParams.set("room-id", roomId)
+
+		window.navigator.clipboard.writeText(url.toString())
 
 		setIsCopied(true)
 		setTimeout(() => setIsCopied(false), 2 * 1000)
