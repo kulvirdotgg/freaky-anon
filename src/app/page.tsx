@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,16 +10,22 @@ import { useUsername } from "@/hooks/use-username"
 import { client } from "@/lib/api-client"
 
 export default function Page() {
-	const router = useRouter()
+	const searchParams = useSearchParams()
+	const roomId = searchParams.get("room-id") ?? undefined
 
 	const { name } = useUsername()
 
+	const router = useRouter()
 	const { mutate: joinRoom } = useMutation({
-		mutationKey: ["join-chat-room"],
-		mutationFn: async () => {
-			const res = await client.room.post()
+		mutationKey: ["join-room"],
+		mutationFn: async ({ roomId }: { roomId?: string }) => {
+			// TODO: change the API so user can join room with specified ID
+			const res = await client.room.post({ ttl: 180 })
 
-			const roomId = res.data?.roomId
+			if (!roomId) {
+				roomId = res.data?.roomId
+			}
+
 			if (res.status === 201) {
 				router.push(`/room/${roomId}`)
 			}
@@ -32,15 +38,27 @@ export default function Page() {
 				<CardHeader>
 					<CardTitle className="text-base text-primary">{"> "}Anonymous and ephemeral chat rooms</CardTitle>
 				</CardHeader>
-				<CardContent>
-					<Label className="h-8 border-2 border-l-primary/80 px-3 text-foreground/80 text-sm">{name}</Label>
+				<CardContent className="space-y-3">
+					<LabelRow label="user" value={name} />
+					{roomId && <LabelRow label="room-id" value={roomId} />}
 				</CardContent>
-				<CardFooter>
-					<Button className="w-full font-semibold text-sm" onClick={() => joinRoom()} type="button">
-						join room
+				<CardFooter className="w-full">
+					<Button className="w-full font-semibold text-sm" onClick={() => joinRoom({ roomId })} type="submit">
+						join chat room
 					</Button>
 				</CardFooter>
 			</Card>
 		</main>
+	)
+}
+
+function LabelRow({ label, value }: { label: string; value: string }) {
+	return (
+		<div className="grid grid-cols-12">
+			<Label className="col-span-2">{label}</Label>
+			<Label className="col-span-10 h-8 border-2 border-l-primary/80 px-3 text-foreground/80 text-sm">
+				{value}
+			</Label>
+		</div>
 	)
 }
