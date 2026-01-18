@@ -19,16 +19,14 @@ export default function Page() {
 	const { mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
-			// TODO: change the API so user can join room with specified ID
-			const res = await client.room.post({ ttl: 180 })
-
-			if (!roomId) {
-				roomId = res.data?.roomId
-			}
+			const res = await client.room.post({ roomId })
 
 			if (res.status === 201) {
+				const roomId = res.data?.roomId
 				router.push(`/room/${roomId}`)
 			}
+
+			console.log(res.error?.value)
 		},
 	})
 
@@ -44,7 +42,7 @@ export default function Page() {
 				</CardContent>
 				<CardFooter className="w-full">
 					<Button className="w-full font-semibold text-sm" onClick={() => joinRoom({ roomId })} type="submit">
-						join chat room
+						{roomId ? "join room" : "create room"}
 					</Button>
 				</CardFooter>
 			</Card>
