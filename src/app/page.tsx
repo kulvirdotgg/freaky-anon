@@ -17,7 +17,7 @@ export default function Page() {
 	const { mutate: joinRoom } = useMutation({
 		mutationKey: ["join-chat-room"],
 		mutationFn: async () => {
-			const res = await client.room.post({ ttl: 180 })
+			const res = await client.room.post()
 
 			const roomId = res.data?.roomId
 			if (res.status === 201) {
@@ -27,20 +27,17 @@ export default function Page() {
 	})
 
 	return (
-		<main className="flex min-h-screen flex-col items-center justify-center p-4">
+		<main className="flex min-h-screen items-center justify-center">
 			<Card className="w-full max-w-md p-6 backdrop-blur-xl">
 				<CardHeader>
-					<CardTitle className="text-base text-primary">{">"}Anonymous and ephemeral chat rooms</CardTitle>
+					<CardTitle className="text-base text-primary">{"> "}Anonymous and ephemeral chat rooms</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div className="flex items-center gap-3">
-						<Label className="flex-1 border-2 px-3 py-1 text-foreground/80 text-sm">{name}</Label>
-						{/*<Dice4 className="size-8" type="button" />*/}
-					</div>
+					<Label className="h-8 border-2 border-l-primary/80 px-3 text-foreground/80 text-sm">{name}</Label>
 				</CardContent>
-				<CardFooter className="w-full">
+				<CardFooter>
 					<Button className="w-full font-semibold text-sm" onClick={() => joinRoom()} type="button">
-						join anon chat room
+						join room
 					</Button>
 				</CardFooter>
 			</Card>

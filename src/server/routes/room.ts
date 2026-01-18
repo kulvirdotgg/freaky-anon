@@ -6,33 +6,27 @@ import { type Message, realtime } from "@/lib/realtime"
 import { redis, redisKey } from "@/lib/redis"
 import { roomAuth } from "@/server/middleware/auth"
 
+const ROOM_DURATION = 10 * 60 // 10 mins
+
 export const roomRouter = new Elysia({ prefix: "/room" })
 	.use(roomAuth)
-	.post(
-		"/",
-		async ({ body, status }) => {
-			const roomId = nanoid()
+	.post("/", async ({ status }) => {
+		const roomId = nanoid()
 
-			const roomKey = redisKey("room", roomId)
-			await redis
-				.pipeline()
-				.hset(roomKey, {
-					connected: [],
-					createdAt: Date.now(),
-				})
-				.expire(roomKey, body.ttl)
-				.exec()
-
-			return status(201, {
-				roomId,
+		const roomKey = redisKey("room", roomId)
+		await redis
+			.pipeline()
+			.hset(roomKey, {
+				connected: [],
+				createdAt: Date.now(),
 			})
-		},
-		{
-			body: z.object({
-				ttl: z.number().min(120).max(600).default(600),
-			}),
-		},
-	)
+			.expire(roomKey, ROOM_DURATION)
+			.exec()
+
+		return status(201, {
+			roomId,
+		})
+	})
 	.post(
 		"/:roomId/message",
 		async ({ authToken, body, room }) => {
