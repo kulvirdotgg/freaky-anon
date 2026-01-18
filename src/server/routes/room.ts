@@ -6,27 +6,77 @@ import { type Message, realtime } from "@/lib/realtime"
 import { redis, redisKey } from "@/lib/redis"
 import { roomAuth } from "@/server/middleware/auth"
 
-const ROOM_DURATION = 10 * 60 // 10 mins
+const ROOM_CAP = 2
+const ROOM_DURATION_SECONDS = 10 * 60 // 10 mins
 
 export const roomRouter = new Elysia({ prefix: "/room" })
 	.use(roomAuth)
-	.post("/", async ({ status }) => {
-		const roomId = nanoid()
+	.post(
+		"/",
+		async ({ body, cookie, status }) => {
+			let roomId = body.roomId
 
-		const roomKey = redisKey("room", roomId)
-		await redis
-			.pipeline()
-			.hset(roomKey, {
-				connected: [],
-				createdAt: Date.now(),
-			})
-			.expire(roomKey, ROOM_DURATION)
-			.exec()
+			const authToken = cookie["x-auth-token"]?.value ?? nanoid()
 
-		return status(201, {
-			roomId,
-		})
-	})
+			if (roomId) {
+				const roomKey = redisKey("room", roomId)
+				const connected = await redis.hget<string[]>(roomKey, "connected")
+
+				if (!connected) {
+					return status(404, {
+						status: 404,
+						message: "Room not found",
+					})
+				}
+
+				if (connected.includes(authToken)) {
+					return status(201, { roomId })
+				}
+
+				if (connected.length >= ROOM_CAP) {
+					return status(403, {
+						status: 403,
+						message: "Room full",
+					})
+				}
+
+				await redis.hset(roomKey, { connected: [...connected, authToken] })
+			} else {
+				roomId = nanoid()
+				const roomKey = redisKey("room", roomId)
+				await redis
+					.pipeline()
+					.hset(roomKey, {
+						connected: [authToken],
+						createdAt: Date.now(),
+					})
+					.expire(roomKey, ROOM_DURATION_SECONDS)
+					.exec()
+			}
+
+			const authCookie = cookie["x-auth-token"]
+			if (authCookie) {
+				authCookie.set({
+					value: authToken,
+					path: "/",
+					secure: process.env.NODE_ENV === "production",
+					sameSite: "strict",
+					httpOnly: true,
+					expires: new Date(Date.now() + ROOM_DURATION_SECONDS * 1000), // room duration in ms
+				})
+			}
+
+			return status(201, { roomId })
+		},
+		{
+			body: z.object({
+				roomId: z.nanoid().optional(),
+			}),
+			cookie: z.object({
+				"x-auth-token": z.nanoid().optional(),
+			}),
+		},
+	)
 	.post(
 		"/:roomId/message",
 		async ({ authToken, body, room }) => {
