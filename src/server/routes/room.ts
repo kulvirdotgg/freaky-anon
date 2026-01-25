@@ -91,6 +91,21 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 			room: true,
 		},
 	)
+	.get(
+		"/:roomId",
+		async ({ room, status }) => {
+			const messageKey = redisKey("message", room.id)
+			const messages = await redis.lrange<Message>(messageKey, 0, -1)
+
+			return status(200, {
+				messages: messages.map((msg) => ({
+					...msg,
+					userId: undefined,
+				})),
+			})
+		},
+		{ room: true },
+	)
 	.post(
 		"/:roomId/message",
 		async ({ cookie, body, room, status }) => {
