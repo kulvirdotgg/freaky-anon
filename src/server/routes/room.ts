@@ -4,82 +4,104 @@ import { z } from "zod"
 
 import { type Message, realtime } from "@/lib/realtime"
 import { redis, redisKey } from "@/lib/redis"
-import { roomAuth } from "@/server/middleware/auth"
+import { room } from "@/server/middleware/room"
 
 const ROOM_CAP = 2
 const ROOM_DURATION_SECONDS = 10 * 60 // 10 mins
 
 export const roomRouter = new Elysia({ prefix: "/room" })
-	.use(roomAuth)
+	.use(room)
 	.post(
 		"/",
-		async ({ body, cookie, status }) => {
-			let roomId = body.roomId
+		async ({ cookie, status }) => {
+			const roomId = nanoid()
+			const roomKey = redisKey("room", roomId)
 
-			const authToken = cookie["x-auth-token"]?.value ?? nanoid()
+			const userId = nanoid()
+			await redis
+				.pipeline()
+				.hset(roomKey, {
+					connected: [userId],
+					createdAt: Date.now(),
+				})
+				.expire(roomKey, ROOM_DURATION_SECONDS)
+				.exec()
 
-			if (roomId) {
-				const roomKey = redisKey("room", roomId)
-				const connected = await redis.hget<string[]>(roomKey, "connected")
+			cookie["x-auth-token"].set({
+				value: userId,
+				path: "/",
+				secure: process.env.NODE_ENV === "production",
+				sameSite: "strict",
+				httpOnly: true,
+				expires: new Date(Date.now() + ROOM_DURATION_SECONDS * 1000), // room duration in ms
+			})
 
-				if (!connected) {
-					return status(404, {
-						status: 404,
-						message: "Room not found",
-					})
-				}
+			return status(201, { roomId })
+		},
+		{
+			cookie: z.object({
+				"x-auth-token": z.string().optional(),
+			}),
+		},
+	)
+	.post(
+		"/:roomId/join",
+		async ({ room, cookie, status }) => {
+			const { connected } = room
 
-				if (connected.includes(authToken)) {
-					return status(201, { roomId })
-				}
+			const userId = cookie["x-auth-token"].value
 
+			if (!userId) {
 				if (connected.length >= ROOM_CAP) {
-					return status(403, {
-						status: 403,
-						message: "Room full",
-					})
+					return status(403, { message: "Room full" })
 				}
 
-				await redis.hset(roomKey, { connected: [...connected, authToken] })
-			} else {
-				roomId = nanoid()
-				const roomKey = redisKey("room", roomId)
-				await redis
-					.pipeline()
-					.hset(roomKey, {
-						connected: [authToken],
-						createdAt: Date.now(),
-					})
-					.expire(roomKey, ROOM_DURATION_SECONDS)
-					.exec()
-			}
+				const newUserId = nanoid()
 
-			const authCookie = cookie["x-auth-token"]
-			if (authCookie) {
-				authCookie.set({
-					value: authToken,
+				await redis.hset(redisKey("room", room.id), { connected: [...connected, newUserId] })
+
+				cookie["x-auth-token"].set({
+					value: newUserId,
 					path: "/",
 					secure: process.env.NODE_ENV === "production",
 					sameSite: "strict",
 					httpOnly: true,
 					expires: new Date(Date.now() + ROOM_DURATION_SECONDS * 1000), // room duration in ms
 				})
+
+				return status(200, { roomId: room.id })
 			}
 
-			return status(201, { roomId })
+			if (connected.includes(userId)) {
+				return status(200, { roomId: room.id })
+			}
+
+			if (connected.length >= ROOM_CAP) {
+				return status(403, { message: "Room full" })
+			}
+
+			await redis.hset(redisKey("room", room.id), { connected: [...connected, userId] })
+
+			return status(200, { roomId: room.id })
 		},
 		{
-			body: z.object({
-				roomId: z.nanoid().optional(),
-			}),
 			cookie: z.object({
 				"x-auth-token": z.nanoid().optional(),
 			}),
+			room: true,
 		},
 	)
 	.post(
 		"/:roomId/message",
-		async ({ authToken, body, room }) => {
+		async ({ cookie, body, room, status }) => {
+			const userId = cookie["x-auth-token"].value
+
+			if (!room.connected.includes(userId)) {
+				return status(401, {
+					message: "Not authenticated to join the room",
+				})
+			}
+
 			const message: Message = {
 				id: nanoid(),
 				sender: body.sender,
@@ -91,7 +113,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 			const messageKey = redisKey("message", room.id)
 			await redis
 				.pipeline()
-				.rpush(messageKey, { ...message, authToken })
+				.rpush(messageKey, { ...message, userId })
 				.expire(messageKey, room.ttl)
 				.exec()
 
@@ -105,6 +127,9 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				content: z.string().min(1).max(1000),
 				sender: z.string().min(1).max(50),
 			}),
-			"room-auth": true,
+			cookie: z.object({
+				"x-auth-token": z.nanoid(),
+			}),
+			room: true,
 		},
 	)

@@ -20,11 +20,18 @@ export default function Page() {
 	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
-			const res = await client.room.post({ roomId })
+			let res
+			if (roomId) {
+				res = await client.room({ roomId }).join.post()
+			} else {
+				res = await client.room.post()
+			}
 
-			if (res.status === 201) {
-				const roomId = res.data?.roomId
-				router.push(`/room/${roomId}`)
+			if (res.status === 200 || res.status === 201) {
+				const id = res.data?.roomId
+				if (id) {
+					router.push(`/room/${id}`)
+				}
 			}
 		},
 	})
