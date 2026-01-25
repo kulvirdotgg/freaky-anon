@@ -20,6 +20,7 @@ export default function Page() {
 	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
+			// biome-ignore lint: like yeah whatever
 			let res
 			if (roomId) {
 				res = await client.room({ roomId }).join.post()

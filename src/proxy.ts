@@ -23,7 +23,7 @@ export default async function middleware(req: NextRequest) {
 	}
 
 	// if user does not belongs to the room
-	const userId = req.cookies.get("x-auth-token")?.value as string
+	const userId = req.cookies.get("x-user-id")?.value as string
 	if (!connected.includes(userId)) {
 		const redirectUrl = new URL("/", req.url)
 		redirectUrl.searchParams.set("error", "unauthorized")

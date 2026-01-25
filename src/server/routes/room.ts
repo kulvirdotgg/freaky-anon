@@ -27,7 +27,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				.expire(roomKey, ROOM_DURATION_SECONDS)
 				.exec()
 
-			cookie["x-auth-token"].set({
+			cookie["x-user-id"]?.set({
 				value: userId,
 				path: "/",
 				secure: process.env.NODE_ENV === "production",
@@ -40,7 +40,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		},
 		{
 			cookie: z.object({
-				"x-auth-token": z.string().optional(),
+				"x-user-id": z.string().optional(),
 			}),
 		},
 	)
@@ -49,7 +49,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		async ({ room, cookie, status }) => {
 			const { connected } = room
 
-			const userId = cookie["x-auth-token"].value
+			const userId = cookie["x-user-id"]?.value
 
 			if (!userId) {
 				if (connected.length >= ROOM_CAP) {
@@ -60,7 +60,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 
 				await redis.hset(redisKey("room", room.id), { connected: [...connected, newUserId] })
 
-				cookie["x-auth-token"].set({
+				cookie["x-user-id"]?.set({
 					value: newUserId,
 					path: "/",
 					secure: process.env.NODE_ENV === "production",
@@ -86,7 +86,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		},
 		{
 			cookie: z.object({
-				"x-auth-token": z.nanoid().optional(),
+				"x-user-id": z.nanoid().optional(),
 			}),
 			room: true,
 		},
@@ -94,9 +94,9 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 	.post(
 		"/:roomId/message",
 		async ({ cookie, body, room, status }) => {
-			const userId = cookie["x-auth-token"].value
+			const userId = cookie["x-user-id"]?.value
 
-			if (!room.connected.includes(userId)) {
+			if (!userId || !room.connected.includes(userId)) {
 				return status(401, {
 					message: "Not authenticated to join the room",
 				})
@@ -128,7 +128,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				sender: z.string().min(1).max(50),
 			}),
 			cookie: z.object({
-				"x-auth-token": z.nanoid(),
+				"x-user-id": z.nanoid(),
 			}),
 			room: true,
 		},

@@ -9,7 +9,7 @@ export const messageSchema = z.object({
 	content: z.string(),
 	timestamp: z.number(),
 	roomId: z.nanoid(),
-	authToken: z.nanoid().optional(),
+	userId: z.nanoid().optional(),
 })
 
 export type Message = z.infer<typeof messageSchema>
