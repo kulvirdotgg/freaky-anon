@@ -15,9 +15,9 @@ export default async function middleware(req: NextRequest) {
 	const roomKey = redisKey("room", roomId)
 
 	const connected = await redis.hget<string[]>(roomKey, "connected")
-
 	if (!connected) {
 		const redirectUrl = new URL("/", req.url)
+		redirectUrl.searchParams.set("room-id", roomId)
 		redirectUrl.searchParams.set("error", "invalid-room-id")
 		return NextResponse.redirect(redirectUrl)
 	}
@@ -26,6 +26,7 @@ export default async function middleware(req: NextRequest) {
 	const userId = req.cookies.get("x-user-id")?.value as string
 	if (!connected.includes(userId)) {
 		const redirectUrl = new URL("/", req.url)
+		redirectUrl.searchParams.set("room-id", roomId)
 		redirectUrl.searchParams.set("error", "unauthorized")
 		return NextResponse.redirect(redirectUrl)
 	}
