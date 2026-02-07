@@ -6,7 +6,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { formatTime } from "@/lib/format-time"
+import { formatSecondsToMinutes } from "@/lib/format-time"
 
 export default function RoomLayout({
 	children,
@@ -65,7 +65,7 @@ export default function RoomLayout({
 					<div className="flex flex-col">
 						<span className="text-xs uppercase">Self Destruct</span>
 						<span className={clsx("text-amber-500", secondsLeft <= 60 && "text-rose-500")}>
-							{formatTime(secondsLeft)}
+							{formatSecondsToMinutes(secondsLeft)}
 						</span>
 					</div>
 				</div>
