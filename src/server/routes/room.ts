@@ -66,7 +66,7 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 					secure: process.env.NODE_ENV === "production",
 					sameSite: "strict",
 					httpOnly: true,
-					expires: new Date(Date.now() + ROOM_DURATION_SECONDS * 1000), // room duration in ms
+					expires: new Date(Date.now() + room.ttl), // room duration in ms
 				})
 
 				return status(200, { roomId: room.id })
@@ -94,8 +94,8 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 	.get(
 		"/:roomId",
 		async ({ room, status }) => {
-			const messageKey = redisKey("message", room.id)
-			const messages = await redis.lrange<Message>(messageKey, 0, -1)
+			const messagesKey = redisKey("message", room.id)
+			const messages = await redis.lrange<Message>(messagesKey, 0, -1)
 
 			return status(200, {
 				messages: messages.map((msg) => ({
@@ -132,6 +132,8 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				.expire(messageKey, room.ttl)
 				.exec()
 
+			// emit the new message notification to the redis stream
+			// and notify all the subscribers about the new message
 			await realtime.channel(room.id).emit("room.message", message)
 
 			// expire redis stream used by realtime package
