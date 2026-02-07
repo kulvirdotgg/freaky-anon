@@ -31,12 +31,11 @@ export default function Page() {
 		},
 	})
 
-	const { data: messages } = useQuery({
-		queryKey: ["messages", roomId],
+	const { data: roomData } = useQuery({
+		queryKey: ["room", roomId],
 		queryFn: async () => {
 			const res = await client.room({ roomId }).get()
-
-			return res.data?.messages
+			return res.data
 		},
 	})
 
@@ -44,11 +43,11 @@ export default function Page() {
 	useRealtime({
 		channels: [roomId],
 		events: ["room.message", "room.destroy"],
-		onData: ({ event, data }) => {
+		onData: ({ event, data: msg }) => {
 			if (event === "room.message") {
-				queryClient.setQueryData(["messages", roomId], (old: typeof messages) => {
-					if (!old) return [data]
-					return [...old, data]
+				queryClient.setQueryData(["room", roomId], (old: typeof roomData) => {
+					if (!old) return { messages: [msg], ttl: 0 }
+					return { ...old, messages: [...old.messages, msg] }
 				})
 			}
 		},
@@ -57,13 +56,13 @@ export default function Page() {
 	return (
 		<>
 			<div className="flex-1 space-y-4 overflow-y-auto p-4">
-				{messages?.length === 0 && (
+				{roomData?.messages?.length === 0 && (
 					<div className="flex h-full items-center justify-center text-muted-foreground">
 						No messages!! Start the conversation
 					</div>
 				)}
 
-				{messages?.map((msg) => {
+				{roomData?.messages?.map((msg) => {
 					return (
 						<div className="flex flex-col items-start" key={msg.id}>
 							<div className="group max-w-4/5">

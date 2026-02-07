@@ -1,11 +1,13 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
 import { Copy, CopyCheck } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { client } from "@/lib/api-client"
 import { formatSecondsToMinutes } from "@/lib/format-time"
 
 export default function RoomLayout({
@@ -17,7 +19,22 @@ export default function RoomLayout({
 	const roomId = params.roomId as string
 
 	const [isCopied, setIsCopied] = useState(false)
-	const [secondsLeft, setSecondsLeft] = useState(100)
+
+	const { data: roomData } = useQuery({
+		queryKey: ["room", roomId],
+		queryFn: async () => {
+			const res = await client.room({ roomId }).get()
+			return res.data
+		},
+	})
+
+	const [secondsLeft, setSecondsLeft] = useState(roomData?.ttl ?? 0)
+
+	useEffect(() => {
+		if (roomData?.ttl) {
+			setSecondsLeft(roomData.ttl)
+		}
+	}, [roomData?.ttl])
 
 	const copyLink = () => {
 		const url = new URL(window.location.origin)
