@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useParams } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, ViewTransition } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -75,24 +75,22 @@ export default function Page() {
 
 				{roomData?.messages?.map((msg) => {
 					return (
-						<div className="flex flex-col items-start" key={msg.id}>
-							<div className="group max-w-4/5">
-								<div className="mb-1 flex items-baseline gap-3">
-									<span
-										className={cn(
-											"font-bold text-xs uppercase",
-											msg.sender === name ? "text-blue-500" : "text-primary",
-										)}
-									>
-										{msg.sender === name ? "Me" : msg.sender}
-									</span>
-									<span className="text-[10px] text-muted-foreground">
-										{formatTimestamp(msg.timestamp)}
-									</span>
-								</div>
-								<p className="break-all text-sm leading-relaxed">{msg.content}</p>
+						<ViewTransition key={msg.id}>
+							<div className="mb-1 flex items-baseline gap-3">
+								<span
+									className={cn(
+										"font-bold text-xs uppercase",
+										msg.sender === name ? "text-primary" : "text-blue-500",
+									)}
+								>
+									{msg.sender === name ? "Me" : msg.sender}
+								</span>
+								<span className="text-[10px] text-muted-foreground">
+									{formatTimestamp(msg.timestamp)}
+								</span>
 							</div>
-						</div>
+							<p className="text-sm leading-relaxed">{msg.content}</p>
+						</ViewTransition>
 					)
 				})}
 			</div>
