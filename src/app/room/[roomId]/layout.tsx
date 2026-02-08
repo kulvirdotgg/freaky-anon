@@ -7,6 +7,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { client } from "@/lib/api-client"
 import { formatSecondsToMinutes } from "@/lib/format-time"
 
@@ -20,7 +21,7 @@ export default function RoomLayout({
 
 	const [isCopied, setIsCopied] = useState(false)
 
-	const { data: roomData } = useQuery({
+	const { data: roomData, isLoading } = useQuery({
 		queryKey: ["room", roomId],
 		queryFn: async () => {
 			const res = await client.room({ roomId }).get()
@@ -81,9 +82,13 @@ export default function RoomLayout({
 					<div className="h-8 w-px bg-secondary" />
 					<div className="flex flex-col">
 						<span className="text-xs uppercase">Self Destruct</span>
-						<span className={clsx("text-amber-500", secondsLeft <= 60 && "text-rose-500")}>
-							{formatSecondsToMinutes(secondsLeft)}
-						</span>
+						{isLoading ? (
+							<Skeleton className="h-6 w-10" />
+						) : (
+							<span className={clsx("text-amber-500", secondsLeft <= 60 && "text-rose-500")}>
+								{formatSecondsToMinutes(secondsLeft)}
+							</span>
+						)}
 					</div>
 				</div>
 				<Button className="font-bold uppercase" variant="destructive">
