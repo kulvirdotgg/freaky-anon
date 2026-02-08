@@ -1,26 +1,47 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
 import { Copy, CopyCheck } from "lucide-react"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
-import { formatTime } from "@/lib/format-time"
+import { Skeleton } from "@/components/ui/skeleton"
+import { client } from "@/lib/api-client"
+import { formatSecondsToMinutes } from "@/lib/format-time"
 
 export default function RoomLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode
 }>) {
-	const { roomId } = useParams()
+	const params = useParams()
+	const roomId = params.roomId as string
 
 	const [isCopied, setIsCopied] = useState(false)
-	const [secondsLeft, setSecondsLeft] = useState(100)
+
+	const { data: roomData, isLoading } = useQuery({
+		queryKey: ["room", roomId],
+		queryFn: async () => {
+			const res = await client.room({ roomId }).get()
+			return res.data
+		},
+	})
+
+	const [secondsLeft, setSecondsLeft] = useState(roomData?.ttl ?? 0)
+
+	useEffect(() => {
+		if (roomData?.ttl) {
+			setSecondsLeft(roomData.ttl)
+		}
+	}, [roomData?.ttl])
 
 	const copyLink = () => {
-		const url = window.location.href
-		window.navigator.clipboard.writeText(url)
+		const url = new URL(window.location.origin)
+		url.searchParams.set("room-id", roomId)
+
+		window.navigator.clipboard.writeText(url.toString())
 
 		setIsCopied(true)
 		setTimeout(() => setIsCopied(false), 2 * 1000)
@@ -61,9 +82,13 @@ export default function RoomLayout({
 					<div className="h-8 w-px bg-secondary" />
 					<div className="flex flex-col">
 						<span className="text-xs uppercase">Self Destruct</span>
-						<span className={clsx("text-amber-500", secondsLeft <= 60 && "text-rose-500")}>
-							{formatTime(secondsLeft)}
-						</span>
+						{isLoading ? (
+							<Skeleton className="h-6 w-10" />
+						) : (
+							<span className={clsx("text-amber-500", secondsLeft <= 60 && "text-rose-500")}>
+								{formatSecondsToMinutes(secondsLeft)}
+							</span>
+						)}
 					</div>
 				</div>
 				<Button className="font-bold uppercase" variant="destructive">
