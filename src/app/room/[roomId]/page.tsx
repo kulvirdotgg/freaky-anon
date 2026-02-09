@@ -1,7 +1,7 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useRef, useState, ViewTransition } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -40,6 +40,8 @@ export default function Page() {
 		},
 	})
 
+	const router = useRouter()
+
 	const queryClient = useQueryClient()
 	useRealtime({
 		channels: [roomId],
@@ -50,6 +52,8 @@ export default function Page() {
 					if (!old) return { messages: [msg], ttl: 0 }
 					return { ...old, messages: [...old.messages, msg] }
 				})
+			} else if (event === "room.destroy") {
+				router.push("/?destroyed=true")
 			}
 		},
 	})
