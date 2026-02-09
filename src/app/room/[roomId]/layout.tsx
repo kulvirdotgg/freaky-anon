@@ -1,6 +1,6 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
 import { Copy, CopyCheck } from "lucide-react"
 import { useParams } from "next/navigation"
@@ -60,6 +60,13 @@ export default function RoomLayout({
 		return () => clearInterval(timer)
 	}, [])
 
+	const { mutate: destroyRoom } = useMutation({
+		mutationKey: ["destroy-room"],
+		mutationFn: async () => {
+			await client.room({ roomId }).delete()
+		},
+	})
+
 	return (
 		<main className="flex h-screen flex-col">
 			<header className="flex items-center justify-between border-b bg-background/30 p-4">
@@ -91,8 +98,8 @@ export default function RoomLayout({
 						)}
 					</div>
 				</div>
-				<Button className="font-bold uppercase" variant="destructive">
-					insta destroy
+				<Button className="font-bold uppercase" onClick={destroyRoom} variant="destructive">
+					destroy room
 				</Button>
 			</header>
 			{children}
