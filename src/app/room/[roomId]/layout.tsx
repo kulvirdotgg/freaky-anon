@@ -101,13 +101,15 @@ export default function RoomLayout({
 						{isLoading ? (
 							<Skeleton className="h-6 w-10" />
 						) : (
-							<span className={clsx("text-amber-500", secondsLeft <= 60 && "text-rose-500")}>
-								{formatSecondsToMinutes(secondsLeft)}
+							<span
+								className={clsx("text-amber-500", secondsLeft && secondsLeft <= 60 && "text-rose-500")}
+							>
+								{formatSecondsToMinutes(secondsLeft ?? 0)}
 							</span>
 						)}
 					</div>
 				</div>
-				<Button className="font-bold uppercase" onClick={destroyRoom} variant="destructive">
+				<Button className="font-bold uppercase" onClick={() => destroyRoom()} variant="destructive">
 					destroy room
 				</Button>
 			</header>

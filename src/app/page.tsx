@@ -11,10 +11,22 @@ import { useUsername } from "@/hooks/use-username"
 import { client } from "@/lib/api-client"
 
 export default function Page() {
+	return (
+		<Suspense>
+			<Home />
+		</Suspense>
+	)
+}
+
+function Home() {
 	const { name } = useUsername()
 
 	const router = useRouter()
 	const searchParams = useSearchParams()
+
+	const roomId = searchParams.get("room-id") ?? undefined
+	const error = searchParams.get("error")
+	const destroyed = searchParams.get("destroyed")
 
 	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
@@ -33,7 +45,6 @@ export default function Page() {
 					router.push(`/room/${id}`)
 				}
 			} else if (res.status === 403) {
-				const roomId = searchParams.get("room-id")
 				const message = res.error?.value.message
 				router.push(`/?room-id=${roomId}&error=${message}`)
 			}
@@ -42,9 +53,13 @@ export default function Page() {
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-8">
-			<Suspense fallback={null}>
-				<ErrorCard />
-			</Suspense>
+			{(error || destroyed) && (
+				<Card className="w-full max-w-sm bg-red-900/50 py-6 backdrop-blur-xl lg:max-w-md">
+					<CardContent className="text-center text-sm uppercase">
+						{error ? error.split("-").join(" ") : destroyed}
+					</CardContent>
+				</Card>
+			)}
 
 			<Card className="w-full max-w-sm p-6 backdrop-blur-xl lg:max-w-md">
 				<CardHeader>
@@ -54,72 +69,20 @@ export default function Page() {
 				</CardHeader>
 				<CardContent className="space-y-3">
 					<LabelRow label="user" value={name} />
-					<Suspense fallback={null}>
-						<RoomIdRow />
-					</Suspense>
+					{roomId && <LabelRow label="room-id" value={roomId} />}
 				</CardContent>
 				<CardFooter className="w-full">
-					<Suspense
-						fallback={
-							<Button
-								className="w-full font-semibold text-sm"
-								disabled={isPending}
-								onClick={() => joinRoom({})}
-								type="submit"
-							>
-								create room
-							</Button>
-						}
+					<Button
+						className="w-full font-semibold text-sm"
+						disabled={isPending}
+						onClick={() => joinRoom({ roomId })}
+						type="submit"
 					>
-						<JoinRoomButton isPending={isPending} joinRoom={joinRoom} />
-					</Suspense>
+						{roomId ? "join room" : "create room"}
+					</Button>
 				</CardFooter>
 			</Card>
 		</main>
-	)
-}
-
-function ErrorCard() {
-	const searchParams = useSearchParams()
-	const error = searchParams.get("error") ?? undefined
-
-	if (!error) return null
-
-	return (
-		<Card className="w-full max-w-sm bg-red-900/50 py-6 backdrop-blur-xl lg:max-w-md">
-			<CardContent className="text-center text-sm uppercase">{error.split("-").join(" ")}</CardContent>
-		</Card>
-	)
-}
-
-function RoomIdRow() {
-	const searchParams = useSearchParams()
-	const roomId = searchParams.get("room-id") ?? undefined
-
-	if (!roomId) return null
-
-	return <LabelRow label="room-id" value={roomId} />
-}
-
-function JoinRoomButton({
-	isPending,
-	joinRoom,
-}: {
-	isPending: boolean
-	joinRoom: (input: { roomId?: string }) => void
-}) {
-	const searchParams = useSearchParams()
-	const roomId = searchParams.get("room-id") ?? undefined
-
-	return (
-		<Button
-			className="w-full font-semibold text-sm"
-			disabled={isPending}
-			onClick={() => joinRoom({ roomId })}
-			type="submit"
-		>
-			{roomId ? "join room" : "create room"}
-		</Button>
 	)
 }
 

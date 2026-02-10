@@ -1,4 +1,4 @@
-import { Elysia, status } from "elysia"
+import { Elysia } from "elysia"
 import { nanoid } from "nanoid"
 import { z } from "zod"
 
