@@ -60,6 +60,35 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 		},
 		{ room: true },
 	)
+	.delete(
+		"/:roomId",
+		async ({ room, cookie, status }) => {
+			const userId = cookie["x-user-id"]?.value as string
+			if (!room.connected.includes(userId)) {
+				return status(403, {
+					status: 403,
+					message: "Cannot perform this action.",
+				})
+			}
+
+			// send destryoed signal to realtime channel
+			await realtime.channel(room.id).emit("room.destroy", { isDestroyed: true })
+
+			const roomKey = redisKey("room", room.id)
+			const messagesKey = redisKey("message", room.id)
+			// delete the following entries from redis
+			// room - room metadata
+			// room messages - room history
+			// room stream - that was used for realtime pub sub msgs
+			await redis.pipeline().del(roomKey).del(messagesKey).del(room.id).exec()
+		},
+		{
+			room: true,
+			cookie: z.object({
+				"x-user-id": z.nanoid(),
+			}),
+		},
+	)
 	.post(
 		"/:roomId/join",
 		async ({ room, cookie, status }) => {

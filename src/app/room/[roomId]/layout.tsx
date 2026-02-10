@@ -1,9 +1,9 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
 import { Copy, CopyCheck } from "lucide-react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -29,7 +29,7 @@ export default function RoomLayout({
 		},
 	})
 
-	const [secondsLeft, setSecondsLeft] = useState(roomData?.ttl ?? 0)
+	const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
 
 	useEffect(() => {
 		if (roomData?.ttl) {
@@ -47,10 +47,19 @@ export default function RoomLayout({
 		setTimeout(() => setIsCopied(false), 2 * 1000)
 	}
 
+	const router = useRouter()
+
 	useEffect(() => {
+		if (secondsLeft === null) return
+
+		if (secondsLeft <= 0) {
+			router.push("/?destroyed=true")
+			return
+		}
+
 		const timer = setInterval(() => {
 			setSecondsLeft((prev) => {
-				if (prev <= 1) {
+				if (prev === null || prev <= 1) {
 					clearInterval(timer)
 					return 0
 				}
@@ -58,7 +67,14 @@ export default function RoomLayout({
 			})
 		}, 1000)
 		return () => clearInterval(timer)
-	}, [])
+	}, [router, secondsLeft])
+
+	const { mutate: destroyRoom } = useMutation({
+		mutationKey: ["destroy-room"],
+		mutationFn: async () => {
+			await client.room({ roomId }).delete()
+		},
+	})
 
 	return (
 		<main className="flex h-screen flex-col">
@@ -85,14 +101,16 @@ export default function RoomLayout({
 						{isLoading ? (
 							<Skeleton className="h-6 w-10" />
 						) : (
-							<span className={clsx("text-amber-500", secondsLeft <= 60 && "text-rose-500")}>
-								{formatSecondsToMinutes(secondsLeft)}
+							<span
+								className={clsx("text-amber-500", secondsLeft && secondsLeft <= 60 && "text-rose-500")}
+							>
+								{formatSecondsToMinutes(secondsLeft ?? 0)}
 							</span>
 						)}
 					</div>
 				</div>
-				<Button className="font-bold uppercase" variant="destructive">
-					insta destroy
+				<Button className="font-bold uppercase" onClick={() => destroyRoom()} variant="destructive">
+					destroy room
 				</Button>
 			</header>
 			{children}
