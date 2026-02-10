@@ -50,7 +50,7 @@ export default function RoomLayout({
 	const router = useRouter()
 
 	useEffect(() => {
-		if (!secondsLeft) return
+		if (secondsLeft === null) return
 
 		if (secondsLeft <= 0) {
 			router.push("/?destroyed=true")
