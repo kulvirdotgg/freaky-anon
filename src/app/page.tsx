@@ -14,6 +14,8 @@ export default function Page() {
 	const { name } = useUsername()
 
 	const router = useRouter()
+	const searchParams = useSearchParams()
+
 	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
@@ -30,6 +32,10 @@ export default function Page() {
 				if (id) {
 					router.push(`/room/${id}`)
 				}
+			} else if (res.status === 403) {
+				const roomId = searchParams.get("room-id")
+				const message = res.error?.value.message
+				router.push(`/?room-id=${roomId}&error=${message}`)
 			}
 		},
 	})
