@@ -1,44 +1,62 @@
 name: code-quality-checks
 
 on:
-  push:
-    branches: [trunk]
-  pull_request:
-    branches: [trunk]
+    pull_request:
+    push:
+        branches: [trunk]
 
 jobs:
-  typecheck:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v6
+    typecheck:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v6
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
 
-      - name: Install dependencies
-        run: bun install
+            - name: Install dependencies
+              run: bun install
 
-      - name: Typecheck
-        run: bun run typecheck
+            - run: bun run typecheck
 
-  # lint and fomatting quality checks
-  quality:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v6
+    # lint and fomatting quality checks
+    format:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v6
 
-      - name: Setup Biome
-        uses: biomejs/setup-biome@v2
-        with:
-          version: latest
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
 
-      - name: Run Biome
-        run: biome ci .
+            - name: Install dependencies
+              run: bun install
+
+            - run: bun run format:check
+
+    lint:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@v6
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - name: Install dependencies
+              run: bun install
+
+            - run: bun run lint
