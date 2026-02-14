@@ -68,11 +68,11 @@ export default function Page() {
 	return (
 		<>
 			<div
-				className="flex-1 space-y-4 overflow-auto p-4 [&::-webkit-scrollbar-thumb]:bg-primary/70 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar]:w-2"
+				className="[&::-webkit-scrollbar-thumb]:bg-primary/70 [&::-webkit-scrollbar-track]:bg-muted flex-1 space-y-4 overflow-auto p-4 [&::-webkit-scrollbar]:w-2"
 				ref={messagesRef}
 			>
 				{roomData?.messages?.length === 0 && (
-					<div className="flex h-full items-center justify-center text-muted-foreground">
+					<div className="text-muted-foreground flex h-full items-center justify-center">
 						No messages!! Start the conversation
 					</div>
 				)}
@@ -83,13 +83,13 @@ export default function Page() {
 							<div className="mb-1 flex items-baseline gap-3">
 								<span
 									className={cn(
-										"font-bold text-xs uppercase",
+										"text-xs font-bold uppercase",
 										msg.sender === name ? "text-primary" : "text-blue-500",
 									)}
 								>
 									{msg.sender === name ? "Me" : msg.sender}
 								</span>
-								<span className="text-[10px] text-muted-foreground">
+								<span className="text-muted-foreground text-[10px]">
 									{formatTimestamp(msg.timestamp)}
 								</span>
 							</div>
@@ -99,11 +99,12 @@ export default function Page() {
 				})}
 			</div>
 
-			<div className="border-t bg-background/30 p-4">
+			<div className="bg-background/30 border-t p-4">
 				<div className="flex gap-4">
 					<div className="group relative flex-1">
-						<span className="absolute top-1/2 left-4 -translate-y-1/2 font-bold text-accent">{">"}</span>
+						<span className="text-accent absolute top-1/2 left-4 -translate-y-1/2 font-bold">{">"}</span>
 						<Input
+							// oxlint-disable no-autofocus
 							autoFocus
 							className="w-full py-3 pl-8 text-sm"
 							onChange={(e) => setMessage(e.target.value)}
