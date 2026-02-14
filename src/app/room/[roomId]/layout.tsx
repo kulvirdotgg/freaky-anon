@@ -78,12 +78,12 @@ export default function RoomLayout({
 
 	return (
 		<main className="flex h-screen flex-col">
-			<header className="flex items-center justify-between border-b bg-background/30 p-4">
+			<header className="bg-background/30 flex items-center justify-between border-b p-4">
 				<div className="flex items-center gap-4">
 					<div className="flex flex-col">
 						<span className="text-xs uppercase">Room ID</span>
 						<div className="flex items-center gap-2">
-							<code className="font-bold text-accent text-sm">{roomId}</code>
+							<code className="text-accent text-sm font-bold">{roomId}</code>
 							<Button
 								className="cursor-pointer"
 								disabled={isCopied}
@@ -95,7 +95,7 @@ export default function RoomLayout({
 							</Button>
 						</div>
 					</div>
-					<div className="h-8 w-px bg-secondary" />
+					<div className="bg-secondary h-8 w-px" />
 					<div className="flex flex-col">
 						<span className="text-xs uppercase">Self Destruct</span>
 						{isLoading ? (

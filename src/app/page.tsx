@@ -63,7 +63,7 @@ function Home() {
 
 			<Card className="w-full max-w-sm p-6 backdrop-blur-xl lg:max-w-md">
 				<CardHeader>
-					<CardTitle className="text-base text-primary uppercase">
+					<CardTitle className="text-primary text-base uppercase">
 						{"> "}Anonymous ephemeral chat room
 					</CardTitle>
 				</CardHeader>
@@ -73,7 +73,7 @@ function Home() {
 				</CardContent>
 				<CardFooter className="w-full">
 					<Button
-						className="w-full font-semibold text-sm"
+						className="w-full text-sm font-semibold"
 						disabled={isPending}
 						onClick={() => joinRoom({ roomId })}
 						type="submit"
@@ -90,7 +90,7 @@ function LabelRow({ label, value }: { label: string; value: string }) {
 	return (
 		<div className="grid grid-cols-12">
 			<Label className="col-span-2">{label}</Label>
-			<Label className="col-span-10 h-8 border-2 border-l-primary/80 px-3 text-foreground/80 text-sm">
+			<Label className="border-l-primary/80 text-foreground/80 col-span-10 h-8 border-2 px-3 text-sm">
 				{value}
 			</Label>
 		</div>

@@ -1,0 +1,11 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"ignorePatterns": ["src/components/ui/*.tsx"], // skip validation on shadcn components
+	"tabWidth": 4,
+	"printWidth": 120,
+	"useTabs": true,
+	"semi": false,
+	"experimentalTailwindcss": {
+		"functions": ["clsx", "cn", "cva", "tw"]
+	}
+}
