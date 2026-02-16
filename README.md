@@ -12,4 +12,3 @@ If anons gets too freaky any user can self destruct the room and it will destroy
 - [Elysia JS](https://elysiajs.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [ShadCN](https://ui.shadcn.com/)
-- [Biome](https://biomejs.com/)

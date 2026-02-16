@@ -31,7 +31,6 @@ function Home() {
 	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
-			// biome-ignore lint: like yeah whatever
 			let res
 			if (roomId) {
 				res = await client.room({ roomId }).join.post()
@@ -39,14 +38,17 @@ function Home() {
 				res = await client.room.post()
 			}
 
-			if (res.status === 200 || res.status === 201) {
-				const id = res.data?.roomId
-				if (id) {
-					router.push(`/room/${id}`)
-				}
-			} else if (res.status === 403) {
-				const message = res.error?.value.message
-				router.push(`/?room-id=${roomId}&error=${message}`)
+			switch (res.status) {
+				case 200:
+				case 201:
+					const id = res.data?.roomId
+					if (id) {
+						router.push(`/room/${id}`)
+					}
+					break
+				case 403:
+					const message = res.error?.value
+					router.push(`/?room-id=${roomId}&error=${message}`)
 			}
 		},
 	})

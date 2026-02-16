@@ -58,7 +58,6 @@ export default function Page() {
 		},
 	})
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: the linter just sucks, I need dependecy here
 	useEffect(() => {
 		if (messagesRef.current) {
 			messagesRef.current.scrollTop = messagesRef.current.scrollHeight
