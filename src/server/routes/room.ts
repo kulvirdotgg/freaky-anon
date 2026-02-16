@@ -9,6 +9,26 @@ import { room } from "@/server/middleware/room"
 const ROOM_CAP = 2
 const ROOM_DURATION_SECONDS = 10 * 60 // 10 mins
 
+const JOIN_ROOM_SCRIPT = `
+if redis.call("EXISTS", KEYS[1]) == 0 then
+  return -1
+end
+
+local connectedRaw = redis.call("HGET", KEYS[1], "connected")
+if not connectedRaw then
+  return -1
+end
+
+local connected = cjson.decode(connectedRaw)
+if #connected >= tonumber(ARGV[1]) then
+  return 0
+end
+
+table.insert(connected, ARGV[2])
+redis.call("HSET", KEYS[1], "connected", cjson.encode(connected))
+return 1
+`
+
 export const roomRouter = new Elysia({ prefix: "/room" })
 	.use(room)
 	.post(
@@ -111,14 +131,17 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				return status(200, { roomId: room.id })
 			}
 
-			if (connected.length >= ROOM_CAP) {
-				return status(403, { message: "Room full" })
-			}
-
 			// create a new identify for user joining new room
 			const newUserId = nanoid()
+			const roomKey = redisKey("room", room.id)
+			const join = await redis.eval<[number, string], number>(JOIN_ROOM_SCRIPT, [roomKey], [ROOM_CAP, newUserId])
 
-			await redis.hset(redisKey("room", room.id), { connected: [...connected, newUserId] })
+			switch (join) {
+				case -1:
+					return status(410, { message: "Room expired" })
+				case 0:
+					return status(403, { message: "Room full" })
+			}
 
 			cookie["x-user-id"]?.set({
 				value: newUserId,
