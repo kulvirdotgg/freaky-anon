@@ -5,7 +5,6 @@ export const errorHandler = new Elysia({ name: "error-handler" })
 		switch (code) {
 			case "VALIDATION": {
 				return status(422, {
-					status: 422,
 					message: error.valueError?.message,
 					details: {
 						location: error.type,
@@ -16,7 +15,6 @@ export const errorHandler = new Elysia({ name: "error-handler" })
 			}
 			case "NOT_FOUND": {
 				return status(404, {
-					status: 404,
 					message: "Route not found",
 				})
 			}
@@ -32,7 +30,6 @@ export const errorHandler = new Elysia({ name: "error-handler" })
 				}
 
 				return status(statusCode, {
-					status: statusCode,
 					message: errMsg,
 				})
 			}

@@ -9,23 +9,63 @@ import { room } from "@/server/middleware/room"
 const ROOM_CAP = 2
 const ROOM_DURATION_SECONDS = 10 * 60 // 10 mins
 
+const JOIN_ROOM_SCRIPT = `
+if redis.call("EXISTS", KEYS[1]) == 0 then
+  return -1
+end
+
+local connectedRaw = redis.call("HGET", KEYS[1], "connected")
+local connected = cjson.decode(connectedRaw)
+
+-- if room capacity if full
+if #connected >= tonumber(ARGV[1]) then
+  return 0
+end
+
+-- append the user to the room's connected list
+table.insert(connected, ARGV[2])
+redis.call("HSET", KEYS[1], "connected", cjson.encode(connected))
+local ttl = redis.call("TTL", KEYS[1])
+return ttl
+`
+
 export const roomRouter = new Elysia({ prefix: "/room" })
 	.use(room)
 	.post(
 		"/",
-		async ({ cookie, status }) => {
-			const roomId = nanoid()
-			const roomKey = redisKey("room", roomId)
-
+		async ({ cookie, body, status }) => {
 			const userId = nanoid()
-			await redis
-				.pipeline()
-				.hset(roomKey, {
-					connected: [userId],
-					createdAt: Date.now(),
-				})
-				.expire(roomKey, ROOM_DURATION_SECONDS)
-				.exec()
+			let { roomId } = body
+			let ttl = ROOM_DURATION_SECONDS
+
+			if (roomId) {
+				const roomKey = redisKey("room", roomId)
+				const result = await redis.eval<[string, string], number>(
+					JOIN_ROOM_SCRIPT,
+					[roomKey],
+					[ROOM_CAP.toString(), userId],
+				)
+
+				switch (result) {
+					case -1:
+						return status(404, { message: "Room not found" })
+					case 0:
+						return status(403, { message: "Room full" })
+					default:
+						ttl = result
+				}
+			} else {
+				roomId = nanoid()
+				const roomKey = redisKey("room", roomId)
+				await redis
+					.pipeline()
+					.hset(roomKey, {
+						connected: [userId],
+						createdAt: Date.now(),
+					})
+					.expire(roomKey, ROOM_DURATION_SECONDS)
+					.exec()
+			}
 
 			cookie["x-user-id"]?.set({
 				value: userId,
@@ -33,14 +73,14 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				secure: process.env.NODE_ENV === "production",
 				sameSite: "strict",
 				httpOnly: true,
-				expires: new Date(Date.now() + ROOM_DURATION_SECONDS * 1000), // room duration in ms
+				expires: new Date(Date.now() + ttl * 1000),
 			})
 
 			return status(201, { roomId })
 		},
 		{
-			cookie: z.object({
-				"x-user-id": z.string().optional(),
+			body: z.object({
+				roomId: z.nanoid().optional(),
 			}),
 		},
 	)
@@ -58,96 +98,32 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				ttl: room.ttl,
 			})
 		},
-		{ room: true },
+		{
+			room: true,
+		},
 	)
 	.delete(
 		"/:roomId",
-		async ({ room, cookie, status }) => {
-			const userId = cookie["x-user-id"]?.value as string
-			if (!room.connected.includes(userId)) {
-				return status(403, {
-					status: 403,
-					message: "Cannot perform this action.",
-				})
-			}
-
+		async ({ room }) => {
 			// send destryoed signal to realtime channel
 			await realtime.channel(room.id).emit("room.destroy", { isDestroyed: true })
 
-			const roomKey = redisKey("room", room.id)
-			const messagesKey = redisKey("message", room.id)
 			// delete the following entries from redis
 			// room - room metadata
 			// room messages - room history
 			// room stream - that was used for realtime pub sub msgs
+			const roomKey = redisKey("room", room.id)
+			const messagesKey = redisKey("message", room.id)
 			await redis.pipeline().del(roomKey).del(messagesKey).del(room.id).exec()
 		},
 		{
-			room: true,
-			cookie: z.object({
-				"x-user-id": z.nanoid(),
-			}),
-		},
-	)
-	.post(
-		"/:roomId/join",
-		async ({ room, cookie, status }) => {
-			const { connected } = room
-
-			const userId = cookie["x-user-id"]?.value
-
-			// user is already part of the room
-			if (userId && connected.includes(userId)) {
-				cookie["x-user-id"]?.set({
-					value: userId,
-					path: "/",
-					secure: process.env.NODE_ENV === "production",
-					sameSite: "strict",
-					httpOnly: true,
-					// refresh cookie expiration time to the room duration time
-					expires: new Date(Date.now() + room.ttl * 1000), // room duration in ms
-				})
-
-				return status(200, { roomId: room.id })
-			}
-
-			if (connected.length >= ROOM_CAP) {
-				return status(403, { message: "Room full" })
-			}
-
-			// create a new identify for user joining new room
-			const newUserId = nanoid()
-
-			await redis.hset(redisKey("room", room.id), { connected: [...connected, newUserId] })
-
-			cookie["x-user-id"]?.set({
-				value: newUserId,
-				path: "/",
-				secure: process.env.NODE_ENV === "production",
-				sameSite: "strict",
-				httpOnly: true,
-				expires: new Date(Date.now() + room.ttl * 1000), // room duration in ms
-			})
-
-			return status(200, { roomId: room.id })
-		},
-		{
-			cookie: z.object({
-				"x-user-id": z.nanoid().optional(),
-			}),
 			room: true,
 		},
 	)
 	.post(
 		"/:roomId/message",
-		async ({ cookie, body, room, status }) => {
-			const userId = cookie["x-user-id"]?.value
-
-			if (!room.connected.includes(userId)) {
-				return status(401, {
-					message: "Not authenticated to join the room",
-				})
-			}
+		async ({ cookie, body, room }) => {
+			const userId = cookie["x-user-id"]?.value as string
 
 			const message: Message = {
 				id: nanoid(),
@@ -175,9 +151,6 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 			body: z.object({
 				content: z.string().min(1).max(1000),
 				sender: z.string().min(1).max(50),
-			}),
-			cookie: z.object({
-				"x-user-id": z.nanoid(),
 			}),
 			room: true,
 		},

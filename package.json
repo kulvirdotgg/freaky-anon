@@ -6,6 +6,7 @@
 		"build": "next build",
 		"dev": "next dev",
 		"start": "next start",
+		"test:room-join": "k6 run tests/room-join.test.ts",
 		"format": "oxfmt",
 		"format:check": "oxfmt --check",
 		"lint": "oxlint",
@@ -34,6 +35,7 @@
 	},
 	"devDependencies": {
 		"@tailwindcss/postcss": "^4.1.18",
+		"@types/k6": "^1.6.0",
 		"@types/node": "^20.19.33",
 		"@types/react": "^19.2.13",
 		"@types/react-dom": "^19.2.3",

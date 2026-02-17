@@ -31,33 +31,32 @@ function Home() {
 	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
-			// biome-ignore lint: like yeah whatever
-			let res
-			if (roomId) {
-				res = await client.room({ roomId }).join.post()
-			} else {
-				res = await client.room.post()
-			}
-
-			if (res.status === 200 || res.status === 201) {
-				const id = res.data?.roomId
-				if (id) {
+			const res = await client.room.post({ roomId })
+			switch (res.status) {
+				case 201:
+					const id = res.data?.roomId
 					router.push(`/room/${id}`)
-				}
-			} else if (res.status === 403) {
-				const message = res.error?.value.message
-				router.push(`/?room-id=${roomId}&error=${message}`)
+					break
+				case 403:
+				case 410:
+					const message = res.error?.value.message
+					router.push(`/?room-id=${roomId}&error=${message}`)
+					break
 			}
 		},
 	})
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-8">
-			{(error || destroyed) && (
+			{error && (
 				<Card className="w-full max-w-sm bg-red-900/50 py-6 backdrop-blur-xl lg:max-w-md">
-					<CardContent className="text-center text-sm uppercase">
-						{error ? error.split("-").join(" ") : destroyed}
-					</CardContent>
+					<CardContent className="text-center text-sm uppercase">{error.split("-").join(" ")}</CardContent>
+				</Card>
+			)}
+
+			{destroyed && (
+				<Card className="w-full max-w-sm bg-red-900/50 py-6 backdrop-blur-xl lg:max-w-md">
+					<CardContent className="text-center text-sm uppercase">Room Destroyed</CardContent>
 				</Card>
 			)}
 

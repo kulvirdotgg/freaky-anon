@@ -21,10 +21,15 @@ export default function Page() {
 
 	const { name } = useUsername()
 
+	const router = useRouter()
 	const { data: roomData } = useQuery({
 		queryKey: ["room", roomId],
 		queryFn: async () => {
 			const res = await client.room({ roomId }).get()
+			if (res.status !== 200) {
+				const error = "not allowed to join the room"
+				router.push(`/?room-id=${roomId}&error=${error}`)
+			}
 			return res.data
 		},
 	})
@@ -39,8 +44,6 @@ export default function Page() {
 			})
 		},
 	})
-
-	const router = useRouter()
 
 	const queryClient = useQueryClient()
 	useRealtime({
@@ -58,7 +61,6 @@ export default function Page() {
 		},
 	})
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: the linter just sucks, I need dependecy here
 	useEffect(() => {
 		if (messagesRef.current) {
 			messagesRef.current.scrollTop = messagesRef.current.scrollHeight
