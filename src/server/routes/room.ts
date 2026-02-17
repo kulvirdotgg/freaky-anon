@@ -11,7 +11,7 @@ const ROOM_DURATION_SECONDS = 10 * 60 // 10 mins
 
 const JOIN_ROOM_SCRIPT = `
 if redis.call("EXISTS", KEYS[1]) == 0 then
-  return {-1, 0}
+  return -1
 end
 
 local connectedRaw = redis.call("HGET", KEYS[1], "connected")
@@ -19,62 +19,52 @@ local connected = cjson.decode(connectedRaw)
 
 -- if room capacity if full
 if #connected >= tonumber(ARGV[1]) then
-  return {0, 0}
+  return 0
 end
 
 -- append the user to the room's connected list
 table.insert(connected, ARGV[2])
 redis.call("HSET", KEYS[1], "connected", cjson.encode(connected))
 local ttl = redis.call("TTL", KEYS[1])
-return {1, ttl}
+return ttl
 `
 
 export const roomRouter = new Elysia({ prefix: "/room" })
 	.use(room)
-	.post("/", async ({ cookie, status }) => {
-		const roomId = nanoid()
-		const roomKey = redisKey("room", roomId)
-
-		const userId = nanoid()
-		await redis
-			.pipeline()
-			.hset(roomKey, {
-				connected: [userId],
-				createdAt: Date.now(),
-			})
-			.expire(roomKey, ROOM_DURATION_SECONDS)
-			.exec()
-
-		cookie["x-user-id"]?.set({
-			value: userId,
-			path: "/",
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
-			httpOnly: true,
-			expires: new Date(Date.now() + ROOM_DURATION_SECONDS * 1000), // room duration in ms
-		})
-
-		return status(201, { roomId })
-	})
 	.post(
-		"/:roomId/join",
-		async ({ params, cookie, status }) => {
-			const { roomId } = params
-
-			const roomKey = redisKey("room", roomId)
+		"/",
+		async ({ cookie, body, status }) => {
 			const userId = nanoid()
+			let { roomId } = body
+			let ttl = ROOM_DURATION_SECONDS
 
-			const [code, ttl] = await redis.eval<[string, string], [number, number]>(
-				JOIN_ROOM_SCRIPT,
-				[roomKey],
-				[ROOM_CAP.toString(), userId],
-			)
+			if (roomId) {
+				const roomKey = redisKey("room", roomId)
+				const result = await redis.eval<[string, string], number>(
+					JOIN_ROOM_SCRIPT,
+					[roomKey],
+					[ROOM_CAP.toString(), userId],
+				)
 
-			switch (code) {
-				case -1:
-					return status(410, { message: "Room expired" })
-				case 0:
-					return status(403, { message: "Room full" })
+				switch (result) {
+					case -1:
+						return status(404, { message: "Room not found" })
+					case 0:
+						return status(403, { message: "Room full" })
+					default:
+						ttl = result
+				}
+			} else {
+				roomId = nanoid()
+				const roomKey = redisKey("room", roomId)
+				await redis
+					.pipeline()
+					.hset(roomKey, {
+						connected: [userId],
+						createdAt: Date.now(),
+					})
+					.expire(roomKey, ROOM_DURATION_SECONDS)
+					.exec()
 			}
 
 			cookie["x-user-id"]?.set({
@@ -83,14 +73,14 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 				secure: process.env.NODE_ENV === "production",
 				sameSite: "strict",
 				httpOnly: true,
-				expires: new Date(Date.now() + ttl * 1000), // room ttl in ms
+				expires: new Date(Date.now() + ttl * 1000),
 			})
 
-			return status(200, { roomId })
+			return status(201, { roomId })
 		},
 		{
-			params: z.object({
-				roomId: z.nanoid(),
+			body: z.object({
+				roomId: z.nanoid().optional(),
 			}),
 		},
 	)

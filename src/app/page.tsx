@@ -31,24 +31,17 @@ function Home() {
 	const { isPending, mutate: joinRoom } = useMutation({
 		mutationKey: ["join-room"],
 		mutationFn: async ({ roomId }: { roomId?: string }) => {
-			let res
-			if (roomId) {
-				res = await client.room({ roomId }).join.post()
-			} else {
-				res = await client.room.post()
-			}
-
+			const res = await client.room.post({ roomId })
 			switch (res.status) {
-				case 200:
 				case 201:
 					const id = res.data?.roomId
-					if (id) {
-						router.push(`/room/${id}`)
-					}
+					router.push(`/room/${id}`)
 					break
 				case 403:
-					const message = res.error?.value
+				case 410:
+					const message = res.error?.value.message
 					router.push(`/?room-id=${roomId}&error=${message}`)
+					break
 			}
 		},
 	})
