@@ -48,11 +48,15 @@ function Home() {
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center gap-8">
-			{(error || destroyed) && (
+			{error && (
 				<Card className="w-full max-w-sm bg-red-900/50 py-6 backdrop-blur-xl lg:max-w-md">
-					<CardContent className="text-center text-sm uppercase">
-						{error ? error.split("-").join(" ") : destroyed}
-					</CardContent>
+					<CardContent className="text-center text-sm uppercase">{error.split("-").join(" ")}</CardContent>
+				</Card>
+			)}
+
+			{destroyed && (
+				<Card className="w-full max-w-sm bg-red-900/50 py-6 backdrop-blur-xl lg:max-w-md">
+					<CardContent className="text-center text-sm uppercase">Room Destroyed</CardContent>
 				</Card>
 			)}
 
