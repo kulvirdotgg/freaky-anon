@@ -207,16 +207,6 @@ export default function Page() {
 									)}
 								</div>
 								<p className="text-sm leading-relaxed">{msg.content}</p>
-								{messageStatus === "failed" && isSenderMe && (
-									<Button
-										className="mt-1 px-0"
-										onClick={() => submitMessage(msg.content, msg.clientMessageId)}
-										size="xs"
-										variant="link"
-									>
-										Retry
-									</Button>
-								)}
 							</div>
 						</ViewTransition>
 					)
