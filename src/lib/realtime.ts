@@ -5,6 +5,8 @@ import { redis } from "@/lib/redis"
 
 export const messageSchema = z.object({
 	id: z.nanoid(),
+	// client generated id used to reconcile optimistic messages + realtime messages updates
+	clientMessageId: z.nanoid(),
 	sender: z.string(),
 	content: z.string(),
 	timestamp: z.number(),

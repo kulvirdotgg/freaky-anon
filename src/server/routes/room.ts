@@ -122,11 +122,12 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 	)
 	.post(
 		"/:roomId/message",
-		async ({ cookie, body, room }) => {
+		async ({ cookie, body, room, status }) => {
 			const userId = cookie["x-user-id"]?.value as string
 
 			const message: Message = {
 				id: nanoid(),
+				clientMessageId: body.clientMessageId,
 				sender: body.sender,
 				content: body.content,
 				timestamp: Date.now(),
@@ -146,11 +147,14 @@ export const roomRouter = new Elysia({ prefix: "/room" })
 
 			// expire redis stream used by realtime package
 			await redis.expire(room.id, room.ttl)
+
+			return status(201, message)
 		},
 		{
 			body: z.object({
 				content: z.string().min(1).max(1000),
 				sender: z.string().min(1).max(50),
+				clientMessageId: z.nanoid(),
 			}),
 			room: true,
 		},
